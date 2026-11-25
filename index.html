@@ -73,13 +73,31 @@
 <script>
   const SERVICE_UUID = '6e61646e-6164-646e-6161-7568756f687a';
   const CHAR_UUID    = '6e616974-6e61-6974-6568-6e65776e6577';
+  let bleDevice = null;
   let writeChar = null;
+  let isSending = false;
   let brightness = 1.0;
   let lastMode = 'single';
   let currentSingle = '#ffaa00';
   let currentZones = ['#ff0055', '#ff8800', '#7700ff', '#00ccff'];
 
-  async function send20BytePacket(bytes) {
+  async function ensureConnected() {
+    if (!bleDevice) return false;
+    if (!bleDevice.gatt.connected) {
+      document.getElementById('status').innerText = '🔄 Újracsatlakozás...';
+      const server = await bleDevice.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      writeChar = await service.getCharacteristic(CHAR_UUID);
+      await rawSend([0x33, 0x01]);
+      await new Promise(r => setTimeout(r, 120));
+      await rawSend([0x33, 0x20]);
+      await new Promise(r => setTimeout(r, 120));
+      document.getElementById('status').innerText = '✅ Csatlakozva!';
+    }
+    return true;
+  }
+
+  async function rawSend(bytes) {
     if (!writeChar) return;
     const packet = new Uint8Array(20);
     packet.set(bytes.slice(0, 19), 0);
@@ -94,20 +112,35 @@
     }
   }
 
+  async function send20BytePacket(bytes) {
+    if (isSending) return;
+    isSending = true;
+    try {
+      const ok = await ensureConnected();
+      if (!ok) return;
+      await rawSend(bytes);
+      await new Promise(r => setTimeout(r, 150));
+    } catch (e) {
+      document.getElementById('status').innerText = '⚠️ Koppints újra a gombra';
+    } finally {
+      isSending = false;
+    }
+  }
+
   document.getElementById('connectBtn').onclick = async () => {
     try {
       document.getElementById('status').innerText = 'Keresés...';
-      const device = await navigator.bluetooth.requestDevice({
+      bleDevice = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [SERVICE_UUID]
       });
-      const server = await device.gatt.connect();
+      const server = await bleDevice.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
       writeChar = await service.getCharacteristic(CHAR_UUID);
 
-      await send20BytePacket([0x33, 0x01]);
-      await new Promise(r => setTimeout(r, 100));
-      await send20BytePacket([0x33, 0x20]);
+      await rawSend([0x33, 0x01]);
+      await new Promise(r => setTimeout(r, 120));
+      await rawSend([0x33, 0x20]);
 
       document.getElementById('status').innerText = '✅ Csatlakozva!';
     } catch (err) {
