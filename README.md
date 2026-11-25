@@ -6,7 +6,7 @@ Since the official **Ecolor Life** app was removed from the App Store and Google
 👉 **[Open ECOLOR Moon Lamp Controller] (https://klara-clova.github.io/ecolor-lamp./)**
 
 ### 📱 How to Use
-* **iPhone / iPad (iOS):** Open the link above in the free **[Bluefy – Web BLE Browser](https://apple.com)** app (Safari does not support Web Bluetooth).
+* **iPhone / iPad (iOS):** Open the link above in the free **[Bluefy (https://bluefy.app/) – Web BLE Browser](https://apple.com)** app (Safari does not support Web Bluetooth).
 * **Android:** Open the link directly in **Google Chrome** (no APK installation needed).
 * **Windows / Mac:** Open the link in **Google Chrome** or **Microsoft Edge** (requires Bluetooth).
 
