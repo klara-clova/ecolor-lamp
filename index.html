@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ECOLOR Moon Lamp Pro</title>
+  <title>ECOLOR Moon Lamp Web Controller</title>
   <style>
     body { font-family: -apple-system, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px 0; }
     .card { background: #1e1e1e; padding: 22px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); width: 320px; text-align: center; }
@@ -21,22 +21,23 @@
     input[type="range"] { width: 100%; margin: 8px 0 16px; accent-color: #f39c12; }
     label { font-size: 13px; color: #bbb; display: block; text-align: left; font-weight: 600; }
     #status { font-size: 13px; color: #888; margin-top: 6px; }
+    .hint { font-size: 11px; color: #666; margin-top: 14px; line-height: 1.4; border-top: 1px solid #2c2c2c; padding-top: 10px; }
   </style>
 </head>
 <body>
 <div class="card">
   <h2>🌕 ECOLOR Moon Lamp</h2>
-  <button id="connectBtn">🔗 Csatlakozás a lámpához</button>
+  <button id="connectBtn">🔗 Connect to Lamp</button>
   
   <div class="row">
-    <button class="btn-on" onclick="setPower(true)">Be</button>
-    <button class="btn-off" onclick="setPower(false)">Ki</button>
+    <button class="btn-on" onclick="setPower(true)">On</button>
+    <button class="btn-off" onclick="setPower(false)">Off</button>
   </div>
 
-  <label>Fényerő: <span id="bVal">100</span>%</label>
+  <label>Brightness: <span id="bVal">100</span>%</label>
   <input type="range" min="5" max="100" value="100" onchange="setBrightness(this.value)" oninput="document.getElementById('bVal').innerText=this.value">
 
-  <label>Egyszínű gyorsgombok:</label>
+  <label>Solid Color Presets:</label>
   <div class="presets">
     <button class="preset-btn" style="background:#ffeedd" onclick="sendColorHex('#ffeedd')"></button>
     <button class="preset-btn" style="background:#ff9900" onclick="sendColorHex('#ff9900')"></button>
@@ -48,18 +49,18 @@
     <button class="preset-btn" style="background:#22ff00" onclick="sendColorHex('#22ff00')"></button>
   </div>
 
-  <label>Egyedi teljes szín:</label>
+  <label>Custom Solid Color:</label>
   <input type="color" class="single" id="singlePicker" value="#ffaa00" onchange="sendColorHex(this.value)">
 
-  <label>🌈 Kész színátmenetek (zónás):</label>
+  <label>🌈 Gradient Presets (4-Zone):</label>
   <div class="presets">
-    <button class="grad-btn" style="background:linear-gradient(90deg,#ff512f,#dd2476,#ff9966,#ffcc33)" onclick="applyGrad(['#ff512f','#dd2476','#ff9966','#ffcc33'])">Naplemente</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff512f,#dd2476,#ff9966,#ffcc33)" onclick="applyGrad(['#ff512f','#dd2476','#ff9966','#ffcc33'])">Sunset</button>
     <button class="grad-btn" style="background:linear-gradient(90deg,#00f260,#0575e6,#7700ff,#00ffcc)" onclick="applyGrad(['#00f260','#0575e6','#7700ff','#00ffcc'])">Aurora</button>
-    <button class="grad-btn" style="background:linear-gradient(90deg,#ff9a9e,#fecfef,#a1c4fd,#c2e9fb)" onclick="applyGrad(['#ff9a9e','#fecfef','#a1c4fd','#c2e9fb'])">Pasztell</button>
-    <button class="grad-btn" style="background:linear-gradient(90deg,#ff0000,#ff8800,#00ff00,#0066ff)" onclick="applyGrad(['#ff0000','#ff8800','#00ff00','#0066ff'])">Szivárvány</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff9a9e,#fecfef,#a1c4fd,#c2e9fb)" onclick="applyGrad(['#ff9a9e','#fecfef','#a1c4fd','#c2e9fb'])">Pastel</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff0000,#ff8800,#00ff00,#0066ff)" onclick="applyGrad(['#ff0000','#ff8800','#00ff00','#0066ff'])">Rainbow</button>
   </div>
 
-  <label>🎨 Saját 4 zónás színátmenet:</label>
+  <label>🎨 Custom 4-Zone Gradient:</label>
   <div class="zones">
     <input type="color" id="z1" value="#ff0055" onchange="sendCustomZones()">
     <input type="color" id="z2" value="#ff8800" onchange="sendCustomZones()">
@@ -67,7 +68,8 @@
     <input type="color" id="z4" value="#00ccff" onchange="sendCustomZones()">
   </div>
 
-  <div id="status">Nincs csatlakoztatva</div>
+  <div id="status">Not connected</div>
+  <div class="hint">Open in <b>Bluefy</b> (iOS) or <b>Chrome</b> (Android/Desktop).<br>To reset lamp BLE: hold Power + tap My Color until purple flash.</div>
 </div>
 
 <script>
@@ -84,7 +86,7 @@
   async function ensureConnected() {
     if (!bleDevice) return false;
     if (!bleDevice.gatt.connected) {
-      document.getElementById('status').innerText = '🔄 Újracsatlakozás...';
+      document.getElementById('status').innerText = '🔄 Reconnecting...';
       const server = await bleDevice.gatt.connect();
       const service = await server.getPrimaryService(SERVICE_UUID);
       writeChar = await service.getCharacteristic(CHAR_UUID);
@@ -92,7 +94,7 @@
       await new Promise(r => setTimeout(r, 120));
       await rawSend([0x33, 0x20]);
       await new Promise(r => setTimeout(r, 120));
-      document.getElementById('status').innerText = '✅ Csatlakozva!';
+      document.getElementById('status').innerText = '✅ Connected!';
     }
     return true;
   }
@@ -121,7 +123,7 @@
       await rawSend(bytes);
       await new Promise(r => setTimeout(r, 150));
     } catch (e) {
-      document.getElementById('status').innerText = '⚠️ Koppints újra a gombra';
+      document.getElementById('status').innerText = '⚠️ Tap again to retry';
     } finally {
       isSending = false;
     }
@@ -129,7 +131,7 @@
 
   document.getElementById('connectBtn').onclick = async () => {
     try {
-      document.getElementById('status').innerText = 'Keresés...';
+      document.getElementById('status').innerText = 'Scanning...';
       bleDevice = await navigator.bluetooth.requestDevice({
         acceptAllDevices: true,
         optionalServices: [SERVICE_UUID]
@@ -142,9 +144,9 @@
       await new Promise(r => setTimeout(r, 120));
       await rawSend([0x33, 0x20]);
 
-      document.getElementById('status').innerText = '✅ Csatlakozva!';
+      document.getElementById('status').innerText = '✅ Connected!';
     } catch (err) {
-      document.getElementById('status').innerText = '❌ Hiba: ' + err.message;
+      document.getElementById('status').innerText = '❌ Error: ' + err.message;
     }
   };
 
