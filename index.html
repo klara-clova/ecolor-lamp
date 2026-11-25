@@ -3,21 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ECOLOR Moon Lamp Vezérlő</title>
+  <title>ECOLOR Moon Lamp Pro</title>
   <style>
-    body { font-family: -apple-system, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .card { background: #1e1e1e; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); width: 310px; text-align: center; }
-    h2 { margin-top: 0; font-size: 22px; }
-    button { background: #4a90e2; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; }
+    body { font-family: -apple-system, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 15px 0; }
+    .card { background: #1e1e1e; padding: 22px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); width: 320px; text-align: center; }
+    h2 { margin: 0 0 15px; font-size: 21px; }
+    button { background: #4a90e2; color: white; border: none; padding: 13px; border-radius: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; }
     .row { display: flex; gap: 10px; margin-bottom: 15px; }
     .btn-on { background: #2ecc71; }
     .btn-off { background: #e74c3c; }
-    .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 18px; }
-    .preset-btn { height: 42px; border-radius: 10px; border: 2px solid #333; padding: 0; margin: 0; }
-    input[type="color"] { width: 100%; height: 55px; border: none; border-radius: 12px; cursor: pointer; background: none; margin: 8px 0 16px; }
-    input[type="range"] { width: 100%; margin: 10px 0 18px; accent-color: #f39c12; }
-    label { font-size: 14px; color: #ccc; display: block; text-align: left; }
-    #status { font-size: 13px; color: #888; margin-top: 8px; }
+    .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 16px; }
+    .preset-btn { height: 38px; border-radius: 10px; border: 2px solid #333; padding: 0; margin: 0; }
+    .grad-btn { height: 40px; border-radius: 10px; border: 2px solid #444; padding: 0; margin: 0; font-size: 12px; text-shadow: 0 1px 3px #000; }
+    .zones { display: flex; gap: 8px; margin: 8px 0 12px; }
+    .zones input[type="color"] { flex: 1; height: 45px; border: none; border-radius: 10px; background: none; cursor: pointer; padding: 0; }
+    input[type="color"].single { width: 100%; height: 48px; border: none; border-radius: 12px; cursor: pointer; background: none; margin: 6px 0 14px; }
+    input[type="range"] { width: 100%; margin: 8px 0 16px; accent-color: #f39c12; }
+    label { font-size: 13px; color: #bbb; display: block; text-align: left; font-weight: 600; }
+    #status { font-size: 13px; color: #888; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -30,7 +33,10 @@
     <button class="btn-off" onclick="setPower(false)">Ki</button>
   </div>
 
-  <label>Gyors színek:</label>
+  <label>Fényerő: <span id="bVal">80</span>%</label>
+  <input type="range" min="1" max="100" value="80" onchange="setBrightness(this.value)" oninput="document.getElementById('bVal').innerText=this.value">
+
+  <label>Egyszínű gyorsgombok:</label>
   <div class="presets">
     <button class="preset-btn" style="background:#ffeedd" onclick="sendColorHex('#ffeedd')"></button>
     <button class="preset-btn" style="background:#ff9900" onclick="sendColorHex('#ff9900')"></button>
@@ -42,11 +48,24 @@
     <button class="preset-btn" style="background:#22ff00" onclick="sendColorHex('#22ff00')"></button>
   </div>
 
-  <label>Egyedi színválasztó:</label>
-  <input type="color" id="colorPicker" value="#ffaa00" onchange="sendColorHex(this.value)">
+  <label>Egyedi teljes szín:</label>
+  <input type="color" class="single" value="#ffaa00" onchange="sendColorHex(this.value)">
 
-  <label>Fényerő: <span id="bVal">80</span>%</label>
-  <input type="range" min="1" max="100" value="80" onchange="setBrightness(this.value)" oninput="document.getElementById('bVal').innerText=this.value">
+  <label>🌈 Kész színátmenetek (zónás):</label>
+  <div class="presets">
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff512f,#dd2476,#ff9966,#ffcc33)" onclick="applyGrad(['#ff512f','#dd2476','#ff9966','#ffcc33'])">Naplemente</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#00f260,#0575e6,#7700ff,#00ffcc)" onclick="applyGrad(['#00f260','#0575e6','#7700ff','#00ffcc'])">Aurora</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff9a9e,#fecfef,#a1c4fd,#c2e9fb)" onclick="applyGrad(['#ff9a9e','#fecfef','#a1c4fd','#c2e9fb'])">Pasztell</button>
+    <button class="grad-btn" style="background:linear-gradient(90deg,#ff0000,#ff8800,#00ff00,#0066ff)" onclick="applyGrad(['#ff0000','#ff8800','#00ff00','#0066ff'])">Szivárvány</button>
+  </div>
+
+  <label>🎨 Saját 4 zónás színátmenet:</label>
+  <div class="zones">
+    <input type="color" id="z1" value="#ff0055" onchange="sendCustomZones()">
+    <input type="color" id="z2" value="#ff8800" onchange="sendCustomZones()">
+    <input type="color" id="z3" value="#7700ff" onchange="sendCustomZones()">
+    <input type="color" id="z4" value="#00ccff" onchange="sendCustomZones()">
+  </div>
 
   <div id="status">Nincs csatlakoztatva</div>
 </div>
@@ -98,16 +117,47 @@
 
   async function setBrightness(val) {
     document.getElementById('bVal').innerText = val;
-    // Valódi fényerő parancs (Protocol.f(int, int)) -> 0xAA, 0x04, 0x00, 0x01, érték
-    await send20BytePacket([0xAA, 0x04, 0x00, 0x01, parseInt(val)]);
+    // Valódi fényerő parancs (Protocol.f(int)) -> 0xAA, 0x04, 0x02, [1-100]
+    await send20BytePacket([0xAA, 0x04, 0x02, parseInt(val)]);
+  }
+
+  function hexToRgb(hex) {
+    return [
+      parseInt(hex.slice(1, 3), 16),
+      parseInt(hex.slice(3, 5), 16),
+      parseInt(hex.slice(5, 7), 16)
+    ];
   }
 
   async function sendColorHex(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    // Kizárólag a nyugodt egyszínű mód (Protocol.c(r, g, b)) – hangvezérlés nélkül!
+    const [r, g, b] = hexToRgb(hex);
     await send20BytePacket([0xAA, 0x04, 0x00, 0x05, 0x04, r, g, b]);
+  }
+
+  // Többzónás színátmenet küldése (Protocol.a(List<ColorBean>, false, 0))
+  async function sendZones(hexList) {
+    const payload = [0xAA, 0x04, 0x11, 0x02, hexList.length];
+    for (const h of hexList) {
+      payload.push(...hexToRgb(h));
+    }
+    await send20BytePacket(payload);
+  }
+
+  async function applyGrad(colors) {
+    document.getElementById('z1').value = colors.at(0);
+    document.getElementById('z2').value = colors.at(1);
+    document.getElementById('z3').value = colors.at(2);
+    document.getElementById('z4').value = colors.at(3);
+    await sendZones(colors);
+  }
+
+  async function sendCustomZones() {
+    await sendZones([
+      document.getElementById('z1').value,
+      document.getElementById('z2').value,
+      document.getElementById('z3').value,
+      document.getElementById('z4').value
+    ]);
   }
 </script>
 </body>
