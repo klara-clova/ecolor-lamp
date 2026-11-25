@@ -13,3 +13,5 @@ Direct link: https://klara-clova.github.io/ecolor-lamp/
 
 ### 💡 Troubleshooting
 * If the lamp does not appear or fails to connect, unplug it for 5 seconds or **hold the Power touch button while rapidly tapping the "My Color" button until the lamp flashes purple** to reset its Bluetooth module.
+
+<img width="1200" height="1200" alt="image" src="https://github.com/user-attachments/assets/77b9d280-9ae2-4d4b-98c4-5f6436e330eb" />
