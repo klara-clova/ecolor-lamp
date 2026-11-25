@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECOLOR Moon Lamp Vezérlő</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .card { background: #1e1e1e; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); width: 310px; text-align: center; }
+    h2 { margin-top: 0; font-size: 22px; }
+    button { background: #4a90e2; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; }
+    .row { display: flex; gap: 10px; margin-bottom: 15px; }
+    .btn-on { background: #2ecc71; }
+    .btn-off { background: #e74c3c; }
+    .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0 18px; }
+    .preset-btn { height: 42px; border-radius: 10px; border: 2px solid #333; padding: 0; margin: 0; }
+    input[type="color"] { width: 100%; height: 55px; border: none; border-radius: 12px; cursor: pointer; background: none; margin: 8px 0 16px; }
+    input[type="range"] { width: 100%; margin: 10px 0 18px; accent-color: #f39c12; }
+    label { font-size: 14px; color: #ccc; display: block; text-align: left; }
+    #status { font-size: 13px; color: #888; margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>🌕 ECOLOR Moon Lamp</h2>
+  <button id="connectBtn">🔗 Csatlakozás a lámpához</button>
+  
+  <div class="row">
+    <button class="btn-on" onclick="setPower(true)">Be</button>
+    <button class="btn-off" onclick="setPower(false)">Ki</button>
+  </div>
+
+  <label>Gyors színek:</label>
+  <div class="presets">
+    <button class="preset-btn" style="background:#ffeedd" onclick="sendColorHex('#ffeedd')"></button>
+    <button class="preset-btn" style="background:#ff9900" onclick="sendColorHex('#ff9900')"></button>
+    <button class="preset-btn" style="background:#ff2200" onclick="sendColorHex('#ff2200')"></button>
+    <button class="preset-btn" style="background:#ff00aa" onclick="sendColorHex('#ff00aa')"></button>
+    <button class="preset-btn" style="background:#7700ff" onclick="sendColorHex('#7700ff')"></button>
+    <button class="preset-btn" style="background:#0066ff" onclick="sendColorHex('#0066ff')"></button>
+    <button class="preset-btn" style="background:#00ffcc" onclick="sendColorHex('#00ffcc')"></button>
+    <button class="preset-btn" style="background:#22ff00" onclick="sendColorHex('#22ff00')"></button>
+  </div>
+
+  <label>Egyedi színválasztó:</label>
+  <input type="color" id="colorPicker" value="#ffaa00" onchange="sendColorHex(this.value)">
+
+  <label>Fényerő: <span id="bVal">80</span>%</label>
+  <input type="range" min="1" max="100" value="80" onchange="setBrightness(this.value)" oninput="document.getElementById('bVal').innerText=this.value">
+
+  <div id="status">Nincs csatlakoztatva</div>
+</div>
+
+<script>
+  const SERVICE_UUID = '6e61646e-6164-646e-6161-7568756f687a';
+  const CHAR_UUID    = '6e616974-6e61-6974-6568-6e65776e6577';
+  let writeChar = null;
+
+  async function send20BytePacket(bytes) {
+    if (!writeChar) return;
+    const packet = new Uint8Array(20);
+    packet.set(bytes.slice(0, 19), 0);
+    let xor = 0;
+    for (let i = 0; i < 19; i++) xor ^= packet.at(i);
+    packet.set([xor], 19);
+
+    try {
+      await writeChar.writeValueWithoutResponse(packet);
+    } catch (e) {
+      await writeChar.writeValue(packet);
+    }
+  }
+
+  document.getElementById('connectBtn').onclick = async () => {
+    try {
+      document.getElementById('status').innerText = 'Keresés...';
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [SERVICE_UUID]
+      });
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      writeChar = await service.getCharacteristic(CHAR_UUID);
+
+      await send20BytePacket([0x33, 0x01]);
+      await new Promise(r => setTimeout(r, 100));
+      await send20BytePacket([0x33, 0x20]);
+
+      document.getElementById('status').innerText = '✅ Csatlakozva!';
+    } catch (err) {
+      document.getElementById('status').innerText = '❌ Hiba: ' + err.message;
+    }
+  };
+
+  async function setPower(on) {
+    await send20BytePacket([0xAA, 0x01, on ? 0x01 : 0x00]);
+  }
+
+  async function setBrightness(val) {
+    document.getElementById('bVal').innerText = val;
+    // Valódi fényerő parancs (Protocol.f(int, int)) -> 0xAA, 0x04, 0x00, 0x01, érték
+    await send20BytePacket([0xAA, 0x04, 0x00, 0x01, parseInt(val)]);
+  }
+
+  async function sendColorHex(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    // Kizárólag a nyugodt egyszínű mód (Protocol.c(r, g, b)) – hangvezérlés nélkül!
+    await send20BytePacket([0xAA, 0x04, 0x00, 0x05, 0x04, r, g, b]);
+  }
+</script>
+</body>
+</html>
