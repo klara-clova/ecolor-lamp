@@ -3,7 +3,7 @@
 Since the official **Ecolor Life** app was removed from the App Store and Google Play, this free, open-source web controller brings back full color, brightness, and 4-zone gradient controls directly in your browser — no APK sideloading or account required.
 
 ### 🔗 Live Web App
-👉 **[Open ECOLOR Moon Lamp Controller] ([https://klara-clova.github.io/ecolor-lamp./])**
+👉 **[Open ECOLOR Moon Lamp Controller] (https://klara-clova.github.io/ecolor-lamp./)**
 
 ### 📱 How to Use
 * **iPhone / iPad (iOS):** Open the link above in the free **[Bluefy – Web BLE Browser](https://apple.com)** app (Safari does not support Web Bluetooth).
